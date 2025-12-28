@@ -1,0 +1,33 @@
+# Go 环境配置切换工具配置文件
+# 可以定义多个配置环境
+
+environments:
+  # 公司内网环境
+  company:
+    name: "公司内网环境"
+    goprivate: "git.company.com,gitlab.internal.com"
+    goproxy: "https://goproxy.company.com,direct"
+    gosumdb: "sum.company.com+<hash>"
+    gonoproxy: "git.company.com"
+    gonosumdb: "git.company.com"
+
+  # 公共环境（默认）
+  public:
+    name: "公共环境"
+    goprivate: ""
+    goproxy: "https://goproxy.cn,https://goproxy.io,direct"
+    gosumdb: "sum.golang.org"
+    gonoproxy: ""
+    gonosumdb: ""
+
+  # 混合环境
+  hybrid:
+    name: "混合环境"
+    goprivate: "github.com/mycompany/*,git.internal.com"
+    goproxy: "https://goproxy.cn,direct"
+    gosumdb: "sum.golang.org"
+    gonoproxy: "github.com/mycompany/*"
+    gonosumdb: "github.com/mycompany/*"
+
+# 默认使用的环境
+default_env: public
