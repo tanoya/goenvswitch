@@ -1,5 +1,5 @@
 # ============================================================================
-# GoEnv-Switch Makefile
+# GoEnv-Switch Makefile 
 # ============================================================================
 
 # 项目信息
@@ -160,7 +160,7 @@ benchmark: ## 运行基准测试
 build: deps ## 编译当前平台
 	@echo ">>> 编译当前平台..."
 	@mkdir -p $(BUILD_DIR)
-	$(GO) build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(APP_NAME) .
+	$(GO) build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(APP_NAME) ./cmd
 	@echo ">>> 编译完成: $(BUILD_DIR)/$(APP_NAME)"
 
 build-all: deps $(addprefix build-platform-,$(subst /,-,$(PLATFORMS))) ## 编译所有平台
@@ -176,8 +176,8 @@ build-platform-%:
 	@mkdir -p $(OUTPUT_DIR)
 	@CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) $(GO) build \
 		-ldflags "$(LDFLAGS)" \
-		-o $(OUTPUT_DIR)/$(APP_NAME)$(EXT) .
-	@cp config.yaml $(OUTPUT_DIR)/ 2>/dev/null || true
+		-o $(OUTPUT_DIR)/$(APP_NAME)$(EXT) ./cmd
+	@cp config/config.yaml $(OUTPUT_DIR)/config.yaml 2>/dev/null || true
 	@cp README.md $(OUTPUT_DIR)/ 2>/dev/null || true
 	@echo ">>> 完成: $(OUTPUT_DIR)/$(APP_NAME)$(EXT)"
 
@@ -230,7 +230,7 @@ checksum: ## 生成校验和
 
 install: deps ## 安装到 GOPATH/bin
 	@echo ">>> 安装到 GOPATH/bin..."
-	$(GO) install -ldflags "$(LDFLAGS)" .
+	$(GO) install -ldflags "$(LDFLAGS)" ./cmd
 	@echo ">>> 安装完成: $$($(GO) env GOPATH)/bin/$(APP_NAME)"
 
 uninstall: ## 从 GOPATH/bin 卸载
@@ -299,7 +299,7 @@ docker-push: ## 推送 Docker 镜像
 # ============================================================================
 
 run: ## 运行程序
-	$(GO) run . $(ARGS)
+	$(GO) run ./cmd $(ARGS)
 
 dev: deps fmt vet ## 开发模式（格式化 + 静态分析）
 	@echo ">>> 开发检查完成"
@@ -322,6 +322,6 @@ init-config: ## 生成默认配置文件
 		echo "config.yaml 已存在"; \
 	else \
 		echo ">>> 生成默认配置文件..."; \
-		$(GO) run . init; \
+		$(GO) run ./cmd init; \
 		echo ">>> 配置文件已生成"; \
 	fi

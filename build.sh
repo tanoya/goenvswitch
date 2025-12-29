@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ 
 # ============================================================================
 # GoEnv-Switch 编译脚本
 # 支持多平台交叉编译
@@ -126,10 +126,10 @@ build_single() {
             -X 'main.BuildTime=${BUILD_TIME}' \
             -X 'main.GitCommit=${GIT_COMMIT}'" \
         -o "${output_dir}/${binary_name}" \
-        "${ROOT_DIR}/main.go"
+        "${ROOT_DIR}/cmd/main.go"
     
     # 复制配置文件示例
-    cp "${ROOT_DIR}/config.yaml" "${output_dir}/" 2>/dev/null || true
+    cp "${ROOT_DIR}/config/config.yaml" "${output_dir}/config.yaml" 2>/dev/null || true
     cp "${ROOT_DIR}/README.md" "${output_dir}/" 2>/dev/null || true
     
     success "编译完成: ${output_dir}/${binary_name}"
@@ -152,7 +152,7 @@ build_current() {
             -X 'main.BuildTime=${BUILD_TIME}' \
             -X 'main.GitCommit=${GIT_COMMIT}'" \
         -o "${BUILD_DIR}/${binary_name}" \
-        "${ROOT_DIR}/main.go"
+        "${ROOT_DIR}/cmd/main.go"
     
     success "编译完成: ${BUILD_DIR}/${binary_name}"
 }
@@ -233,12 +233,13 @@ generate_checksums() {
 install_local() {
     info "安装到 GOPATH/bin..."
     
+    cd "${ROOT_DIR}"
     go install \
         -ldflags "-s -w \
             -X 'main.Version=${VERSION}' \
             -X 'main.BuildTime=${BUILD_TIME}' \
             -X 'main.GitCommit=${GIT_COMMIT}'" \
-        "${ROOT_DIR}"
+        ./cmd
     
     success "安装完成: $(go env GOPATH)/bin/${APP_NAME}"
 }

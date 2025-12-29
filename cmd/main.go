@@ -237,8 +237,7 @@ Go 环境配置切换工具
   goenv-switch current
   goenv-switch show company
   goenv-switch init
-  goenv-switch -c /path/to/config.yaml switch company
-`)
+  goenv-switch -c /path/to/config.yaml switch company`)
 }
 
 func main() {
