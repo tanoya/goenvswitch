@@ -167,50 +167,27 @@ func getDefaultConfigPath() string {
 	}
 
 	// 其次使用用户主目录下的配置文件
+	return defaultConfigUserPath()
+}
+
+// defaultConfigUserPath 获取用户主目录下的配置文件路径
+func defaultConfigUserPath() string {
 	home, err := os.UserHomeDir()
 	if err == nil {
-		configPath := filepath.Join(home, ".goenv-switch", "config.yaml")
-		if _, err := os.Stat(configPath); err == nil {
-			return configPath
-		}
-	}
+		return filepath.Join(home, ".goenv-switch", "config.yaml")
 
+	}
 	return "config.yaml"
 }
 
 // createDefaultConfig 创建默认配置文件
-func createDefaultConfig(path string) error {
-	defaultConfig := `# Go 环境配置切换工具配置文件
-
-environments:
-  # 公司内网环境
-  company:
-    name: "公司内网环境"
-    goprivate: "git.company.com"
-    goproxy: "https://goproxy.company.com,direct"
-    gosumdb: "off"
-    gonoproxy: "git.company.com"
-    gonosumdb: "git.company.com"
-
-  # 公共环境
-  public:
-    name: "公共环境"
-    goprivate: ""
-    goproxy: "https://goproxy.cn,https://goproxy.io,direct"
-    gosumdb: "sum.golang.org"
-    gonoproxy: ""
-    gonosumdb: ""
-
-# 默认使用的环境
-default_env: public
-`
+func createDefaultConfig(rawContent []byte, path string) error {
 	// 创建目录
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
-
-	return os.WriteFile(path, []byte(defaultConfig), 0644)
+	return os.WriteFile(path, rawContent, 0644)
 }
 
 func printUsage() {
@@ -274,15 +251,23 @@ func main() {
 
 	// 处理 init 命令（不需要加载配置）
 	if command == "init" {
-		path := "config.yaml"
-		if len(commandArgs) > 0 {
-			path = commandArgs[0]
+		// 从configPath中读取配置文本内容，当作纯文本读取
+		content, err := os.ReadFile(configPath)
+		if err != nil {
+			fmt.Printf("读取配置文件失败: %v\n", err)
+			os.Exit(1)
 		}
-		if err := createDefaultConfig(path); err != nil {
+		userPath := defaultConfigUserPath()
+		if err != nil {
+			fmt.Printf("获取用户主目录下的配置文件路径失败: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := createDefaultConfig(content, userPath); err != nil {
 			fmt.Printf("创建配置文件失败: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Printf("配置文件已创建: %s\n", path)
+		fmt.Printf("配置文件已创建: %s\n", userPath)
 		return
 	}
 
