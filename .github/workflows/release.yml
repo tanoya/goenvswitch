@@ -9,6 +9,10 @@ env:
   APP_NAME: goenv-switch
   GO_VERSION: '1.23.3'
 
+permissions:
+  contents: write  # 授予写入内容的权限（包括创建 Release、上传资产）
+  packages: write  # 上传包到 GitHub Packages
+
 jobs:
   # 代码质量检查和测试
   quality:
