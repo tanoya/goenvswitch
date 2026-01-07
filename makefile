@@ -322,6 +322,6 @@ init-config: ## 生成默认配置文件
 		echo "config.yaml 已存在"; \
 	else \
 		echo ">>> 生成默认配置文件..."; \
-		$(GO) run ./cmd init; \
+		$(GO) run ./cmd -c ./config/config.yaml init; \
 		echo ">>> 配置文件已生成"; \
 	fi

@@ -247,11 +247,17 @@ hybrid:
 
 ```
 goenv-switch/
-├── main.go          # 主程序
-├── config.yaml      # 配置文件示例
-├── go.mod           # Go 模块文件
-├── go.sum           # 依赖校验文件
-└── README.md        # 说明文档
+├── 📁 .git/                          # Git 版本控制目录
+├── 📄 .gitignore                     # Git 忽略文件配置
+├── 📄 README.md                      # 项目详细说明文档
+├── 📄 go.mod                         # Go 模块依赖管理文件
+├── 📄 go.sum                         # Go 依赖校验文件
+├── 📄 makefile                       # 构建脚本配置
+├── 📄 build.sh                       # 构建脚本
+├── 📁 cmd/                           # 主程序目录
+│   └── 📄 main.go                    # 程序入口文件
+└── 📁 config/                        # 配置文件目录
+    └── 📄 config.yaml                # 默认配置文件示例
 ```
 
 ## 依赖
