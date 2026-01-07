@@ -230,7 +230,7 @@ checksum: ## 生成校验和
 
 install: deps ## 安装到 GOPATH/bin
 	@echo ">>> 安装到 GOPATH/bin..."
-	$(GO) install -ldflags "$(LDFLAGS)" ./cmd
+	$(GO) build -o $$($(GO) env GOPATH)/bin/$(APP_NAME) -ldflags "$(LDFLAGS)" ./cmd 
 	@echo ">>> 安装完成: $$($(GO) env GOPATH)/bin/$(APP_NAME)"
 
 uninstall: ## 从 GOPATH/bin 卸载
