@@ -9,10 +9,6 @@ env:
   APP_NAME: goenv-switch
   GO_VERSION: '1.23.3'
 
-permissions:
-  contents: write  # 授予写入内容的权限（包括创建 Release、上传资产）
-  packages: write  # 上传包到 GitHub Packages
-
 jobs:
   # 代码质量检查和测试
   quality:
@@ -71,15 +67,24 @@ jobs:
     - name: Build for all platforms
       run: |
         VERSION=${{ steps.get_version.outputs.version }}
-        make build-all VERSION=$VERSION
+        APP_NAME=${{ env.APP_NAME }}
+        make build-all VERSION=$VERSION APP_NAME=$APP_NAME
 
     - name: Package release files
       run: |
         VERSION=${{ steps.get_version.outputs.version }}
-        make package VERSION=$VERSION
+        APP_NAME=${{ env.APP_NAME }}
+        make package VERSION=$VERSION APP_NAME=$APP_NAME
 
     - name: Generate checksums
       run: make checksum
+
+    - name: List distribution files
+      run: |
+        echo "=== 生成的发布文件 ==="
+        ls -la dist/
+        echo "=== 校验和文件内容 ==="
+        cat dist/checksums.txt
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -87,7 +92,7 @@ jobs:
         tag_name: ${{ github.ref_name }}
         name: ${{ env.APP_NAME }} ${{ steps.get_version.outputs.version }}
         body: |
-          ## GoEnv-Switch ${{ steps.get_version.outputs.version }}
+          ## ${{ env.APP_NAME }} ${{ steps.get_version.outputs.version }}
           
           一个专业的 Go 语言环境配置切换工具，支持通过配置文件管理多个环境配置。
           
@@ -146,7 +151,8 @@ jobs:
     - name: Quick release build
       run: |
         VERSION=${{ steps.get_version.outputs.version }}
-        make quick-release VERSION=$VERSION
+        APP_NAME=${{ env.APP_NAME }}
+        make quick-release VERSION=$VERSION APP_NAME=$APP_NAME
 
     - name: Create Quick Release
       uses: softprops/action-gh-release@v1
@@ -154,7 +160,7 @@ jobs:
         tag_name: ${{ github.ref_name }}
         name: ${{ env.APP_NAME }} ${{ steps.get_version.outputs.version }} (Quick)
         body: |
-          ## GoEnv-Switch ${{ steps.get_version.outputs.version }} (快速发布)
+          ## ${{ env.APP_NAME }} ${{ steps.get_version.outputs.version }} (快速发布)
           
           此版本为快速发布版本，跳过了部分测试流程。
           

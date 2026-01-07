@@ -1,9 +1,9 @@
 # ============================================================================
-# GoEnv-Switch Makefile 
+# GoEnv-Switch Makefile  
 # ============================================================================
 
-# 项目信息
-APP_NAME := goenv-switch
+# 项目信息（支持外部传入覆盖）
+APP_NAME ?= goenv-switch
 VERSION ?= 1.0.0
 BUILD_TIME := $(shell date "+%Y-%m-%d %H:%M:%S")
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -61,6 +61,7 @@ help: ## 显示帮助信息
 	@echo "  make build                    # 编译当前平台"
 	@echo "  make build-all                # 编译所有平台"
 	@echo "  make release VERSION=2.0.0    # 指定版本号发布"
+	@echo "  make release APP_NAME=myapp   # 指定应用名称发布"
 	@echo ""
 
 info: ## 显示项目信息
@@ -262,6 +263,7 @@ release: clean deps fmt-check vet test build-all package checksum ## 完整发�
 	@echo ""
 	@echo "========================================"
 	@echo ">>> 发布完成!"
+	@echo "    应用名称: $(APP_NAME)"
 	@echo "    版本: $(VERSION)"
 	@echo "    目录: $(DIST_DIR)"
 	@echo "========================================"
@@ -272,6 +274,7 @@ quick-release: clean deps build-all package checksum ## 快速发布（跳过测
 	@echo ""
 	@echo "========================================"
 	@echo ">>> 快速发布完成!"
+	@echo "    应用名称: $(APP_NAME)"
 	@echo "    版本: $(VERSION)"
 	@echo "    目录: $(DIST_DIR)"
 	@echo "========================================"
