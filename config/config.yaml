@@ -11,7 +11,7 @@ environments:
     gonoproxy: "git.company.com"
     gonosumdb: "git.company.com"
 
-  # 公共环境（默认）
+  # 公共环境
   public:
     name: "公共环境"
     goprivate: ""
@@ -28,6 +28,3 @@ environments:
     gosumdb: "sum.golang.org"
     gonoproxy: "github.com/mycompany/*"
     gonosumdb: "github.com/mycompany/*"
-
-# 默认使用的环境
-default_env: public

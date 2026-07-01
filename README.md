@@ -101,7 +101,7 @@ environments:
     gonoproxy: "git.company.com"
     gonosumdb: "git.company.com"
 
-  # 公共环境（默认）
+  # 公共环境
   public:
     name: "公共环境"
     goprivate: ""
@@ -119,8 +119,6 @@ environments:
     gonoproxy: "github.com/mycompany/*"
     gonosumdb: "github.com/mycompany/*"
 
-# 默认使用的环境
-default_env: public
 ```
 
 ### 配置项说明
@@ -144,7 +142,7 @@ $ ./goenv-switch list
 可用的环境配置:
 --------------------------------------------------
   company         - 公司内网环境
-  public          - 公共环境 (默认)
+● public          - 公共环境
   hybrid          - 混合环境
 ```
 
