@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -38,7 +39,6 @@ type GoEnvConfig struct {
 // Config 完整配置文件结构
 type Config struct {
 	Environments map[string]GoEnvConfig `yaml:"environments"`
-	DefaultEnv   string                 `yaml:"default_env"`
 }
 
 // ConfigManager 配置管理器
@@ -46,6 +46,8 @@ type ConfigManager struct {
 	config     Config
 	configPath string
 }
+
+var trackedGoEnvKeys = []string{"GOPRIVATE", "GOPROXY", "GOSUMDB", "GONOPROXY", "GONOSUMDB"}
 
 // NewConfigManager 创建配置管理器
 func NewConfigManager(configPath string) (*ConfigManager, error) {
@@ -71,18 +73,25 @@ func (cm *ConfigManager) loadConfig() error {
 }
 
 // ListEnvironments 列出所有可用环境
-func (cm *ConfigManager) ListEnvironments() {
+func (cm *ConfigManager) ListEnvironments() error {
 	fmt.Printf("\n%s可用的环境配置:%s\n", ColorBold+ColorCyan, ColorReset)
 	fmt.Println(strings.Repeat("-", 50))
 
-	for key, env := range cm.config.Environments {
-		defaultMark := ""
-		if key == cm.config.DefaultEnv {
-			defaultMark = fmt.Sprintf("%s (默认)%s", ColorGreen, ColorReset)
+	currentEnv, err := cm.matchCurrentEnvironment()
+	if err != nil {
+		return err
+	}
+
+	for _, key := range cm.environmentNames() {
+		env := cm.config.Environments[key]
+		currentMark := "  "
+		if key == currentEnv {
+			currentMark = fmt.Sprintf("%s●%s ", ColorGreen, ColorReset)
 		}
-		fmt.Printf("  %s%-15s%s - %s%s\n", ColorYellow, key, ColorReset, env.Name, defaultMark)
+		fmt.Printf("%s%s%-15s%s - %s\n", currentMark, ColorYellow, key, ColorReset, env.Name)
 	}
 	fmt.Println()
+	return nil
 }
 
 // ShowEnvironmentDetail 显示环境详细配置
@@ -140,9 +149,7 @@ func (cm *ConfigManager) ShowCurrentConfig() error {
 	fmt.Printf("\n%s当前 Go 环境配置:%s\n", ColorBold+ColorCyan, ColorReset)
 	fmt.Println(strings.Repeat("-", 50))
 
-	envVars := []string{"GOPRIVATE", "GOPROXY", "GOSUMDB", "GONOPROXY", "GONOSUMDB"}
-
-	for _, env := range envVars {
+	for _, env := range trackedGoEnvKeys {
 		value, err := getGoEnv(env)
 		if err != nil {
 			return err
@@ -164,15 +171,11 @@ func (cm *ConfigManager) InteractiveSwitch() error {
 	fmt.Println(strings.Repeat("-", 50))
 
 	// 显示环境列表
-	var envNames []string
+	envNames := cm.environmentNames()
 	index := 1
-	for key, env := range cm.config.Environments {
-		defaultMark := ""
-		if key == cm.config.DefaultEnv {
-			defaultMark = fmt.Sprintf("%s (默认)%s", ColorGreen, ColorReset)
-		}
-		fmt.Printf("  %s%d.%s %-15s - %s%s\n", ColorYellow, index, ColorReset, key, env.Name, defaultMark)
-		envNames = append(envNames, key)
+	for _, key := range envNames {
+		env := cm.config.Environments[key]
+		fmt.Printf("  %s%d.%s %-15s - %s\n", ColorYellow, index, ColorReset, key, env.Name)
 		index++
 	}
 
@@ -223,6 +226,58 @@ func getGoEnv(key string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(output)), nil
+}
+
+func (cm *ConfigManager) environmentNames() []string {
+	names := make([]string, 0, len(cm.config.Environments))
+	for key := range cm.config.Environments {
+		names = append(names, key)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func (cm *ConfigManager) matchCurrentEnvironment() (string, error) {
+	currentValues := make(map[string]string, len(trackedGoEnvKeys))
+	for _, key := range trackedGoEnvKeys {
+		value, err := getGoEnv(key)
+		if err != nil {
+			return "", fmt.Errorf("读取 %s 失败: %w", key, err)
+		}
+		currentValues[key] = value
+	}
+
+	for _, envName := range cm.environmentNames() {
+		if matchesEnvironment(cm.config.Environments[envName], currentValues) {
+			return envName, nil
+		}
+	}
+
+	return "", nil
+}
+
+func matchesEnvironment(env GoEnvConfig, currentValues map[string]string) bool {
+	normalizedEnv := normalizeEnvironment(env)
+
+	return normalizedEnv.GoPrivate == currentValues["GOPRIVATE"] &&
+		normalizedEnv.GoProxy == currentValues["GOPROXY"] &&
+		normalizedEnv.GoSumDB == currentValues["GOSUMDB"] &&
+		normalizedEnv.GoNoProxy == currentValues["GONOPROXY"] &&
+		normalizedEnv.GoNoSumDB == currentValues["GONOSUMDB"]
+}
+
+func normalizeEnvironment(env GoEnvConfig) GoEnvConfig {
+	normalized := env
+
+	// Go 在 GONOPROXY/GONOSUMDB 为空时会按 GOPRIVATE 生效。
+	if normalized.GoNoProxy == "" {
+		normalized.GoNoProxy = normalized.GoPrivate
+	}
+	if normalized.GoNoSumDB == "" {
+		normalized.GoNoSumDB = normalized.GoPrivate
+	}
+
+	return normalized
 }
 
 // getDefaultConfigPath 获取默认配置文件路径
@@ -376,7 +431,10 @@ func main() {
 	// 执行命令
 	switch command {
 	case "list":
-		cm.ListEnvironments()
+		if err := cm.ListEnvironments(); err != nil {
+			fmt.Printf("%s错误: %v%s\n", ColorRed, err, ColorReset)
+			os.Exit(1)
+		}
 
 	case "show":
 		if len(commandArgs) == 0 {
@@ -391,7 +449,9 @@ func main() {
 	case "switch":
 		if len(commandArgs) == 0 {
 			fmt.Printf("%s错误: 请指定要切换的环境名称%s\n", ColorRed, ColorReset)
-			cm.ListEnvironments()
+			if err := cm.ListEnvironments(); err != nil {
+				fmt.Printf("%s错误: %v%s\n", ColorRed, err, ColorReset)
+			}
 			os.Exit(1)
 		}
 		if err := cm.SwitchEnvironment(commandArgs[0]); err != nil {
