@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -311,8 +312,8 @@ func createDefaultConfig(rawContent []byte, path string) error {
 	return os.WriteFile(path, rawContent, 0644)
 }
 
-func printUsage() {
-	fmt.Printf(`%sGo 环境配置切换工具%s
+func usageText() string {
+	return fmt.Sprintf(`%sGo 环境配置切换工具%s
 
 %s用法:%s
   %sgoenv-switch%s <命令> [参数]
@@ -348,29 +349,67 @@ func printUsage() {
 		ColorGreen, ColorReset, ColorGreen, ColorReset, ColorGreen, ColorReset,
 		ColorGreen, ColorReset, ColorGreen, ColorReset)
 }
-func printWelcome() {
-	fmt.Printf(`%s
- ██████╗  ██████╗ ███████╗███╗   ██╗██╗   ██╗███████╗██╗    ██╗██╗████████╗ ██████╗██╗  ██╗
-██╔════╝ ██╔═══██╗██╔════╝████╗  ██║██║   ██║██╔════╝██║    ██║██║╚══██╔══╝██╔════╝██║  ██║
-██║  ███╗██║   ██║█████╗  ██╔██╗ ██║██║   ██║█████╗  ██║ █╗ ██║██║   ██║   ██║     ███████║
-██║   ██║██║   ██║██╔══╝  ██║╚██╗██║╚██╗ ██╔╝██╔══╝  ██║███╗██║██║   ██║   ██║     ██╔══██║
-╚██████╔╝╚██████╔╝███████╗██║ ╚████║ ╚████╔╝ ███████╗╚███╔███╔╝██║   ██║   ╚██████╗██║  ██║
- ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝  ╚═══╝  ╚══════╝ ╚══╝╚══╝ ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝
-                                                                                             %s
-%sGo 环境配置切换工具 v%s%s
-%s`,
-		ColorCyan, ColorReset, ColorBold+ColorGreen, Version, ColorReset, ColorReset)
+
+func printUsage() {
+	fmt.Print(usageText())
+}
+
+func printWelcome(includeUsage bool) {
+	bannerLines := []string{
+		" ████   ███   ████  █   █ █ █████  ███  █   █",
+		"█      █   █ █      █   █ █   █   █   █ █   █",
+		"█  ███ █   █  ███   █ █ █ █   █   █     █████",
+		"█    █ █   █     █  ██ ██ █   █   █     █   █",
+		" ████   ███  ████   █   █ █   █    ███  █   █",
+	}
+
+	fmt.Println(ColorYellow)
+	for _, line := range bannerLines {
+		fmt.Println(line)
+	}
+	fmt.Printf("%s%sGo 环境配置切换工具 v%s%s\n%s",
+		ColorReset, ColorBold+ColorGreen, Version, ColorReset, ColorReset)
+	if includeUsage {
+		fmt.Print(usageText())
+	}
+
+	// Move the cursor back to the banner area and redraw the logo in place.
+	linesAbove := len(bannerLines) + 1
+	if includeUsage {
+		linesAbove += strings.Count(usageText(), "\n")
+	}
+	fmt.Printf("\033[%dA", linesAbove)
+
+	blankLine := strings.Repeat(" ", len([]rune(bannerLines[0])))
+	for i := range bannerLines {
+		fmt.Print(ColorYellow)
+		fmt.Print("\r")
+		fmt.Print(blankLine)
+		fmt.Print("\033[K\r")
+		for _, ch := range bannerLines[i] {
+			fmt.Printf("%c", ch)
+			time.Sleep(10 * time.Millisecond)
+		}
+		if i < len(bannerLines)-1 {
+			fmt.Print("\n")
+		}
+	}
+
+	fmt.Print(ColorYellow)
+	trailingLines := linesAbove - len(bannerLines)
+	fmt.Printf("%s\033[%dB\r", ColorReset, trailingLines)
 }
 
 func main() {
-	printWelcome()
 	args := os.Args[1:]
 
 	// 如果没有参数，显示欢迎信息和帮助
 	if len(args) == 0 {
-		printUsage()
+		printWelcome(true)
 		return
 	}
+
+	printWelcome(false)
 
 	// 解析参数
 	configPath := getDefaultConfigPath()
